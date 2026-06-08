@@ -1,0 +1,41 @@
+{
+  "name": "lyrenth-mcp",
+  "version": "0.1.1",
+  "mcpName": "com.lyrenth/lyrenth-mcp",
+  "description": "Model Context Protocol server for Lyrenth: read any web page as a clean AIDocument.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "lyrenth-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "start": "node dist/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "lyrenth",
+    "aidocument",
+    "web",
+    "reader",
+    "agent"
+  ],
+  "homepage": "https://lyrenth.com",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.5.0"
+  }
+}

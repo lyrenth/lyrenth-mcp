@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.log
+*.tgz
+
+# MCP registry DNS/HTTP auth (private keys, never commit)
+key.pem
+*.pem
+mcp-registry-auth
