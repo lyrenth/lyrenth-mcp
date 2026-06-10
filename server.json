@@ -6,12 +6,12 @@
     "url": "https://github.com/lyrenth/lyrenth-mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.4",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "lyrenth-mcp",
-      "version": "0.1.1",
+      "version": "0.1.4",
       "transport": {
         "type": "stdio"
       }

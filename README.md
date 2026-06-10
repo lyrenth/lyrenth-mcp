@@ -2,11 +2,17 @@
 
 Read the web through [Lyrenth](https://lyrenth.com) from any MCP client.
 
-Exposes one tool, `read_url`, that turns a public web page into a clean
-**AIDocument**: stable Markdown plus title, description, and structure, with the
-navigation and boilerplate stripped. Your agent reads cleaned, low-token content
-instead of raw HTML. Reads resolve through Lyrenth's cross-caller cache, and for
-verified domains they return the publisher's canonical version.
+Exposes three tools:
+
+- **`read_url`** turns a public web page into a clean **AIDocument**: stable
+  Markdown plus title, description, and structure, with the navigation and
+  boilerplate stripped. Your agent reads cleaned, low-token content instead of
+  raw HTML, and every result shows how many tokens it saved vs the raw page.
+- **`read_urls`** does the same for up to 20 URLs in one batch call.
+- **`check_usage`** reports your plan tier and credit usage.
+
+Reads resolve through Lyrenth's cross-caller cache, and for verified domains
+they return the publisher's canonical version.
 
 ## Setup
 
@@ -39,11 +45,13 @@ Then ask your assistant to read a page, for example: *"Read
 https://example.com/article and summarize it."* It will call `read_url` and get
 the cleaned AIDocument back.
 
-## Tool
+## Tools
 
 | Tool | Arguments | Returns |
 |------|-----------|---------|
-| `read_url` | `url` (string, required), `fresh` (boolean, optional) | The page as a clean AIDocument: a short provenance header plus the Markdown body. `fresh: true` forces a fresh fetch instead of the cached copy. |
+| `read_url` | `url` (string, required), `fresh` (boolean, optional), `max_tokens` (integer, optional) | The page as a clean AIDocument: a short provenance header (token count + how much smaller than raw HTML) plus the Markdown body. `fresh: true` forces a fresh fetch instead of the cached copy; `max_tokens` caps the body to your context budget, trimmed at a clean paragraph or sentence boundary. |
+| `read_urls` | `urls` (array of 1-20 strings, required), `fresh` (boolean, optional), `max_tokens` (integer, optional) | Up to 20 pages in one call, each as a clean AIDocument, with per-URL error isolation (a failed URL is reported and doesn't block the others). Billed one credit per successfully-read URL. |
+| `check_usage` | none | Your plan tier, credits used against your monthly limit, credits remaining, and the reset date. |
 
 ## Configuration
 
