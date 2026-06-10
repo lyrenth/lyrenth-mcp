@@ -1,0 +1,24 @@
+name: CI
+
+# Builds the server on every push and PR to main so the repo carries a
+# visible CI status (compiles the TypeScript via `tsc`). Lives at the repo
+# root once mirrored to github.com/lyrenth/lyrenth-mcp; inside the monorepo
+# it is just a tracked file (GitHub only runs workflows from the repo root).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
