@@ -1,0 +1,76 @@
+{
+  "manifest_version": "0.2",
+  "name": "lyrenth",
+  "display_name": "Lyrenth",
+  "version": "0.1.4",
+  "description": "Read any web page as a clean, token-efficient AIDocument.",
+  "long_description": "Lyrenth turns any public URL into an AIDocument: clean Markdown plus title, description, and structure, with navigation and boilerplate stripped. Each read carries a provenance header showing the token count and how much smaller it is than the raw page.\n\n**read_url** reads one page. **read_urls** batches up to 20 in a single call, with per-URL error isolation so one failure does not block the rest. **check_usage** reports your plan tier, credits used, credits remaining, and the reset date.\n\nReads resolve through Lyrenth's shared cache, so a page many agents want is served without hammering the origin. Backed by Lyrenth's independently built web index, over 1.9 billion pages and growing about 50 million a day.\n\nA free API key takes about a minute at https://lyrenth.com/signup.",
+  "author": {
+    "name": "Lyrenth",
+    "email": "hello@lyrenth.com",
+    "url": "https://lyrenth.com"
+  },
+  "homepage": "https://lyrenth.com",
+  "documentation": "https://lyrenth.com/docs/integrations",
+  "support": "https://github.com/lyrenth/lyrenth-mcp/issues",
+  "icon": "icon.png",
+  "license": "MIT",
+  "keywords": [
+    "web",
+    "reader",
+    "markdown",
+    "aidocument",
+    "research",
+    "rag",
+    "search-index"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lyrenth/lyrenth-mcp"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "LYRENTH_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "read_url",
+      "description": "Read any public web page as a clean AIDocument: Markdown plus title, description, and structure, with navigation and boilerplate stripped."
+    },
+    {
+      "name": "read_urls",
+      "description": "Read up to 20 public web pages in one batch call, each as a clean AIDocument, with per-URL error isolation."
+    },
+    {
+      "name": "check_usage",
+      "description": "Check your Lyrenth plan tier, credits used against your monthly limit, credits remaining, and the reset date."
+    }
+  ],
+  "tools_generated": false,
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Lyrenth API key",
+      "description": "Your Lyrenth API key. Get a free one at https://lyrenth.com/signup",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "compatibility": {
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "privacy_policies": [
+    "https://www.lyrenth.com/privacy"
+  ]
+}

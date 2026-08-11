@@ -2,7 +2,7 @@
 
 [![lyrenth-mcp MCP server](https://glama.ai/mcp/servers/lyrenth/lyrenth-mcp/badges/card.svg)](https://glama.ai/mcp/servers/lyrenth/lyrenth-mcp)
 
-Read the web through [Lyrenth](https://lyrenth.com) from any MCP client.
+Read the web through [Lyrenth](https://lyrenth.com)'s index from any MCP client.
 
 Exposes three tools:
 
@@ -21,7 +21,16 @@ they return the publisher's canonical version.
 1. Get a free API key at <https://lyrenth.com/signup> (2,000 reads/month, no card).
 2. Add the server to your MCP client.
 
-### Claude Desktop / Cursor
+### Claude Desktop (one click)
+
+Download `lyrenth-mcp.mcpb` from the
+[latest release](https://github.com/lyrenth/lyrenth-mcp/releases/latest) and
+open it. Claude Desktop installs the server and asks for your API key; there is
+no config file to edit. The bundle carries the same code as the npm package.
+
+To build it yourself: `./scripts/build-mcpb.sh`.
+
+### Claude Desktop / Cursor (manual config)
 
 Add to your MCP config (Claude Desktop: `claude_desktop_config.json`):
 
@@ -70,6 +79,19 @@ the cleaned AIDocument back.
   minimal number of origin fetches, so it is fast and origin-friendly.
 - **Canonical when verified.** When a site's owner has verified with Lyrenth,
   you get the version they authored, kept fresh by their change signal.
+
+## Privacy
+
+The server sends exactly two things to Lyrenth's API (api.lyrenth.com): the
+URLs you ask it to read, and your API key to authenticate and meter the call.
+Nothing else leaves your machine: no page content you hold locally, no
+conversation context, no telemetry. How Lyrenth handles fetched pages and
+account data is covered by the privacy policy:
+<https://www.lyrenth.com/privacy>.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 ## Local build
 

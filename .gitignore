@@ -7,3 +7,6 @@ dist/
 key.pem
 *.pem
 mcp-registry-auth
+
+# Built extension bundle (rebuild with ./scripts/build-mcpb.sh)
+*.mcpb

@@ -27,6 +27,8 @@
     "aidocument",
     "web",
     "reader",
+    "search-index",
+    "index",
     "agent"
   ],
   "homepage": "https://lyrenth.com",
