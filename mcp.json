@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "lyrenth": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "lyrenth-mcp"],
+      "env": { "LYRENTH_API_KEY": "${LYRENTH_API_KEY}" }
+    }
+  }
+}
