@@ -1,11 +1,22 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lyrenth",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Read any web page as a clean, token-efficient AIDocument. Built for AI agents, backed by Lyrenth's independent web index of 1.9B+ pages.",
-  "author": { "name": "Lyrenth", "email": "hello@lyrenth.com", "url": "https://lyrenth.com" },
+  "author": {
+    "name": "Lyrenth",
+    "email": "hello@lyrenth.com",
+    "url": "https://lyrenth.com"
+  },
   "homepage": "https://lyrenth.com",
   "repository": "https://github.com/lyrenth/lyrenth-mcp",
   "license": "MIT",
-  "keywords": ["mcp", "web-reader", "aidocument", "markdown", "rag", "ai-agents"]
+  "keywords": [
+    "mcp",
+    "web-reader",
+    "aidocument",
+    "markdown",
+    "rag",
+    "ai-agents"
+  ]
 }

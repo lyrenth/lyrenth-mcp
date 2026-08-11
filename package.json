@@ -1,6 +1,6 @@
 {
   "name": "lyrenth-mcp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "mcpName": "com.lyrenth/lyrenth-mcp",
   "description": "Model Context Protocol server for Lyrenth: read any web page as a clean AIDocument.",
   "license": "MIT",

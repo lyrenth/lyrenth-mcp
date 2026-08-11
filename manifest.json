@@ -2,7 +2,7 @@
   "manifest_version": "0.2",
   "name": "lyrenth",
   "display_name": "Lyrenth",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Read any web page as a clean, token-efficient AIDocument.",
   "long_description": "Lyrenth turns any public URL into an AIDocument: clean Markdown plus title, description, and structure, with navigation and boilerplate stripped. Each read carries a provenance header showing the token count and how much smaller it is than the raw page.\n\n**read_url** reads one page. **read_urls** batches up to 20 in a single call, with per-URL error isolation so one failure does not block the rest. **check_usage** reports your plan tier, credits used, credits remaining, and the reset date.\n\nReads resolve through Lyrenth's shared cache, so a page many agents want is served without hammering the origin. Backed by Lyrenth's independently built web index, over 1.9 billion pages and growing about 50 million a day.\n\nA free API key takes about a minute at https://lyrenth.com/signup.",
   "author": {

@@ -233,7 +233,7 @@ async function readUrls(
 }
 
 async function main(): Promise<void> {
-  const server = new McpServer({ name: "lyrenth", version: "0.1.4" });
+  const server = new McpServer({ name: "lyrenth", version: "0.1.5" });
 
   server.tool(
     "read_url",
@@ -258,6 +258,7 @@ async function main(): Promise<void> {
           "Cap the returned content to roughly this many tokens, trimmed at a clean paragraph or sentence boundary. Use it when you have a tight context budget.",
         ),
     },
+    { title: "Read URL", readOnlyHint: true, openWorldHint: true },
     async ({ url, fresh, max_tokens }) => readUrl(url, fresh ?? false, max_tokens),
   );
 
@@ -286,6 +287,7 @@ async function main(): Promise<void> {
         .optional()
         .describe("Cap each returned document to roughly this many tokens."),
     },
+    { title: "Read URLs (batch)", readOnlyHint: true, openWorldHint: true },
     async ({ urls, fresh, max_tokens }) =>
       readUrls(urls, fresh ?? false, max_tokens),
   );
@@ -295,6 +297,7 @@ async function main(): Promise<void> {
     "Check your Lyrenth credit usage: plan tier, credits used against your " +
       "monthly limit, credits remaining, and the reset date. Takes no arguments.",
     {},
+    { title: "Check usage", readOnlyHint: true, openWorldHint: true },
     async () => checkUsage(),
   );
 
