@@ -41,6 +41,18 @@ storage directory. For Claude Desktop it is `claude_desktop_config.json`. If
 you are unsure which file the host uses, ask rather than guessing, and never
 write the key into a file the user has not agreed to.
 
+## Alternative: hosted endpoint (no local process)
+
+If the host supports remote HTTP MCP servers with a custom header,
+no local server is needed at all:
+
+- URL: `https://api.lyrenth.com/mcp`
+- Header: `Authorization: Bearer aiwk_the_users_key`
+
+Use whichever the user prefers; the tools are identical. The env var
+`LYRENTH_API_URL` on the local server exists only for self-hosted or
+staging deployments; do not set it for normal use.
+
 ## Verify the install
 
 Restart the MCP host so it picks up the new server, then confirm two things:

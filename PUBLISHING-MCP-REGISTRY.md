@@ -75,6 +75,35 @@ curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=lyrenth" | p
   record) somewhere safe if you want to publish updates later; otherwise delete
   `key.pem`. You can leave the TXT record in place.
 
+## The public mirror is NOT a copy of this folder. Never sync it wholesale.
+
+`https://github.com/lyrenth/lyrenth-mcp` is public and is updated by hand.
+There is no automation, so it drifts, and one piece of that drift is
+deliberate and load-bearing:
+
+**`src/index.ts` here registers four tools. The mirror registers three.**
+The fourth is `search`, added dark in commit `991920d` and staged for the
+search launch. It has no runtime flag: nothing in the source turns it off.
+The only thing keeping it dark is that it has never been published. Copying
+this folder over the mirror, or running `npm publish` from here, ships a
+search tool for a product that is gated off in production. That is the one
+class of error this project treats as the most damaging, so treat the
+mirror as a separate artifact and move files into it one at a time.
+
+Checked 2026-08-16: the mirror is identical to this folder except
+`src/index.ts` (intentional, above), the two files below, and a
+`?theme=light` parameter on the LobeHub badge in `README.md` (cosmetic).
+
+**`plugin.json` and `manifest.json` are public copy, not package metadata.**
+The Cursor directory renders `plugin.json`'s `description` verbatim in its
+listing, so a stale sentence there is a stale sentence on someone else's
+website. Both files quote the corpus size. The index grows about 50 million
+pages a day, so any hard number goes stale in weeks: keep the "over" in
+front of it, round down to the last whole billion, and check it against
+`https://api.lyrenth.com/v1/stats/index` whenever you touch either file.
+Changing them here does nothing on its own. The edit has to be repeated in
+the mirror before any directory sees it.
+
 ## Notes / gotchas
 
 - **`repository` in `server.json`** points at `https://github.com/lyrenth/lyrenth-mcp`.

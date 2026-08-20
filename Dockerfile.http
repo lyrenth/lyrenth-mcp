@@ -1,0 +1,71 @@
+# syntax=docker/dockerfile:1.6
+#
+# The Lyrenth MCP server as a hosted streamable-HTTP endpoint.
+#
+# The sibling Dockerfile in this directory builds the SAME source for a
+# different job: it runs the stdio server so directory crawlers can start
+# the container and send an MCP introspection request. This one runs
+# dist/http.js and listens on a port, which is what a remote MCP client
+# (the ChatGPT plugins directory, a hosted agent) needs.
+#
+#   builder: node:20-alpine with the dev dependencies, compiles TypeScript.
+#   runtime: node:20-alpine with production dependencies only, no compiler,
+#            no TypeScript, running as the built-in non-root `node` user.
+#
+# The image holds NO api key. Keys arrive on each request in the
+# Authorization header and are used for that request only, so there is
+# nothing here to leak and nothing shared between callers.
+
+ARG NODE_VERSION=20-alpine
+
+# ---- builder ----
+FROM node:${NODE_VERSION} AS builder
+
+WORKDIR /build
+
+# --ignore-scripts skips the package "prepare" hook, which would try to
+# build before the sources are copied in. The build below is explicit.
+COPY package.json package-lock.json* ./
+RUN npm install --ignore-scripts
+
+COPY tsconfig.json ./
+COPY src ./src
+RUN npm run build
+
+# Reinstall with production dependencies only, so the runtime stage copies
+# a node_modules tree with no compiler and no test tooling in it.
+RUN npm prune --omit=dev
+
+# ---- runtime ----
+FROM node:${NODE_VERSION}
+
+# tini is PID 1 so SIGTERM from `docker compose stop` reaches node and the
+# server closes its listener instead of being killed outright.
+RUN apk add --no-cache tini
+
+WORKDIR /app
+COPY --from=builder /build/node_modules ./node_modules
+COPY --from=builder /build/dist ./dist
+COPY --from=builder /build/package.json ./package.json
+
+# 0.0.0.0 is the container's own interfaces. The public boundary is the
+# compose port publish (127.0.0.1:8081:8081) plus the reverse proxy in
+# front of it, the same arrangement the Go api uses.
+ENV MCP_HTTP_HOST=0.0.0.0 \
+    MCP_HTTP_PORT=8081 \
+    MCP_HTTP_PATH=/mcp \
+    NODE_ENV=production
+
+EXPOSE 8081
+
+# The built-in `node` user, not root. Nothing in /app needs writing.
+USER node
+
+# /healthz answers without touching the upstream api, so an unreachable
+# Lyrenth api never marks this container unhealthy. wget ships with the
+# alpine base image.
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:8081/healthz || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/http.js"]
