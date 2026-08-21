@@ -18,6 +18,17 @@ Exposes three tools:
 Reads resolve through Lyrenth's cross-caller cache, and for verified domains
 they return the publisher's canonical version.
 
+## Hosted, no install
+
+If your MCP client supports remote HTTP servers with a custom header
+(Claude and Cursor remote connectors do), there is nothing to run:
+
+- URL: `https://api.lyrenth.com/mcp`
+- Header: `Authorization: Bearer aiwk_your_key_here`
+
+Same three tools, same key. The npx path below is for clients that
+speak MCP over stdio, and for anyone who prefers a local process.
+
 ## Setup
 
 1. Get a free API key at <https://lyrenth.com/signup> (2,000 reads/month, no card).
