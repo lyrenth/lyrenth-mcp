@@ -1,9 +1,13 @@
 name: CI
 
-# Builds the server on every push and PR to main so the repo carries a
-# visible CI status (compiles the TypeScript via `tsc`). Lives at the repo
-# root once mirrored to github.com/lyrenth/lyrenth-mcp; inside the monorepo
-# it is just a tracked file (GitHub only runs workflows from the repo root).
+# Compiles the server and checks the two things that silently rot between
+# releases: the version, which is declared in four places by three different
+# installers, and the tool surface, which depends on which entry point was
+# built. Neither is caught by `tsc`.
+#
+# Lives at the repo root once mirrored to github.com/lyrenth/lyrenth-mcp;
+# inside the monorepo it is just a tracked file (GitHub only runs workflows
+# from the repo root).
 
 on:
   push:
@@ -20,5 +24,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
       - run: npm ci
+
+      - name: Version declarations agree
+        run: node scripts/check-version.mjs
+
       - run: npm run build
+
+      # Report-only here so a branch mid-change is not blocked. The release
+      # workflow runs the same check with --strict, where it blocks.
+      - name: Tool surface
+        run: node scripts/check-tools.mjs

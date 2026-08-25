@@ -1,0 +1,45 @@
+name: Drift watch
+
+# Publishing is five systems agreeing on one number. They can each fall behind
+# without anyone noticing, because nothing breaks: users just install a version
+# that is not the one in the repo. This looks once a week and opens an issue
+# when they disagree.
+
+on:
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - id: drift
+        name: Compare published versions
+        run: node scripts/check-published.mjs --warn
+
+      - name: Open or update the drift issue
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.drift.outputs.report }}
+        run: |
+          title="Published versions disagree"
+          body=$(printf '%s\n\n```\n%s\n```\n\n_Opened by the drift watch workflow._\n' \
+            "One or more published surfaces no longer match package.json." "$REPORT")
+          existing=$(gh issue list --state open --label version-drift --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh label create version-drift --color BFD4F2 --description "Published surfaces out of step" 2>/dev/null || true
+            gh issue create --title "$title" --label version-drift --body "$body"
+          fi

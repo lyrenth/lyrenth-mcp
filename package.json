@@ -1,6 +1,6 @@
 {
   "name": "lyrenth-mcp",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "mcpName": "com.lyrenth/lyrenth-mcp",
   "description": "Model Context Protocol server for Lyrenth: read any web page as a clean AIDocument.",
   "license": "MIT",
@@ -15,7 +15,15 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "check:version": "node scripts/check-version.mjs",
+    "check:tools": "node scripts/check-tools.mjs",
+    "check:published": "node scripts/check-published.mjs",
+    "bump": "node scripts/bump-version.mjs",
+    "preflight": "npm run build && npm run check:version && npm run check:tools",
+    "sync:mirror": "bash scripts/sync-public-mirror.sh",
+    "start:http": "node dist/http.js",
+    "test": "node --test test/*.test.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -33,7 +41,7 @@
   ],
   "homepage": "https://lyrenth.com",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

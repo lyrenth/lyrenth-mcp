@@ -1,0 +1,138 @@
+name: Release
+
+# One button that publishes every surface in the same order, from the same
+# commit, with the same version string. Nothing here is triggered by a tag
+# push: releases are deliberate, and the guards below are the reason.
+#
+# It defaults to a dry run. Set dry_run to false to actually publish.
+#
+# Required secrets when dry_run is false:
+#   NPM_TOKEN              npm automation token with publish rights.
+#                          Alternatively configure npm trusted publishing for
+#                          this repo and delete the NODE_AUTH_TOKEN line; the
+#                          id-token permission below already supports OIDC.
+#   MCP_REGISTRY_DNS_KEY   Ed25519 private key (hex) for the lyrenth.com DNS
+#                          TXT record that owns the com.lyrenth namespace.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.6 (must already be set in package.json)"
+        required: true
+        type: string
+      dry_run:
+        description: "Run every guard and build, publish nothing"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      # ---- guards. Everything below this block is irreversible. ----
+
+      - name: Version declarations agree and match the requested release
+        run: node scripts/check-version.mjs --tag=v${{ inputs.version }}
+
+      - name: Tag is free
+        run: |
+          if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "tag v${{ inputs.version }} already exists. Bump first." >&2
+            exit 1
+          fi
+
+      - run: npm run build
+
+      - name: Tool surface is exactly the release list
+        run: node scripts/check-tools.mjs --strict
+
+      - name: Build the .mcpb bundle
+        run: ./scripts/build-mcpb.sh
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          {
+            echo "### Dry run: all guards passed"
+            echo ""
+            echo "Would publish **${{ inputs.version }}** to npm, GitHub releases and the MCP registry."
+            echo "Re-run with dry_run unchecked to publish."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---- publish ----
+
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Tag and create the GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag "v${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
+          gh release create "v${{ inputs.version }}" \
+            --title "Lyrenth MCP ${{ inputs.version }}" \
+            --generate-notes \
+            lyrenth-mcp.mcpb
+
+      - name: Install mcp-publisher
+        if: ${{ !inputs.dry_run }}
+        run: |
+          url=$(curl -sSf https://api.github.com/repos/modelcontextprotocol/registry/releases/latest \
+            | python3 -c "import sys,json;d=json.load(sys.stdin);print(next(a['browser_download_url'] for a in d['assets'] if 'linux_amd64' in a['name'] and a['name'].endswith('.tar.gz')))")
+          curl -sSfL "$url" | tar xz mcp-publisher
+          sudo install -m 0755 mcp-publisher /usr/local/bin/mcp-publisher
+
+      - name: Publish to the MCP registry
+        if: ${{ !inputs.dry_run }}
+        run: |
+          mcp-publisher login dns \
+            --domain lyrenth.com \
+            --private-key "${{ secrets.MCP_REGISTRY_DNS_KEY }}"
+          mcp-publisher publish
+
+      # npm and the registry are read-through caches; give them a moment
+      # before asserting that every surface agrees.
+      - name: Confirm every surface reports the new version
+        if: ${{ !inputs.dry_run }}
+        run: |
+          for attempt in 1 2 3 4 5; do
+            sleep 30
+            if node scripts/check-published.mjs; then exit 0; fi
+            echo "attempt $attempt: surfaces still settling"
+          done
+          echo "surfaces did not converge. The publish itself succeeded; investigate before re-running." >&2
+          exit 1
+
+      - name: Remaining manual step
+        if: ${{ !inputs.dry_run }}
+        run: |
+          {
+            echo "### Published ${{ inputs.version }}"
+            echo ""
+            echo "Anthropic's connector directory ingests on its own schedule and has no"
+            echo "public API. Check the listing by hand in a few days; escalation address"
+            echo "is mcp-review@anthropic.com."
+          } >> "$GITHUB_STEP_SUMMARY"
