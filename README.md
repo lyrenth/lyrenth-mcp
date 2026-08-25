@@ -2,7 +2,7 @@
 
 [![lyrenth-mcp MCP server](https://glama.ai/mcp/servers/lyrenth/lyrenth-mcp/badges/card.svg)](https://glama.ai/mcp/servers/lyrenth/lyrenth-mcp)
 
-[![MCP Badge](https://lobehub.com/badge/mcp-full/lyrenth-lyrenth-mcp)](https://lobehub.com/mcp/lyrenth-lyrenth-mcp)
+[![MCP Badge](https://lobehub.com/badge/mcp/lyrenth-lyrenth-mcp)](https://lobehub.com/mcp/lyrenth-lyrenth-mcp)
 
 Read the web through [Lyrenth](https://lyrenth.com)'s index from any MCP client.
 
