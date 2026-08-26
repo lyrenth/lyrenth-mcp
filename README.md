@@ -4,6 +4,8 @@
 
 [![MCP Badge](https://lobehub.com/badge/mcp/lyrenth-lyrenth-mcp)](https://lobehub.com/mcp/lyrenth-lyrenth-mcp)
 
+[![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/lyrenth/lyrenth-mcp)
+
 Read the web through [Lyrenth](https://lyrenth.com)'s index from any MCP client.
 
 Exposes three tools:
