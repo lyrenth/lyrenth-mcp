@@ -20,6 +20,11 @@ Exposes three tools:
 Reads resolve through Lyrenth's cross-caller cache, and for verified domains
 they return the publisher's canonical version.
 
+Every tool declares all four MCP tool annotations (read-only,
+non-destructive, idempotent, and open or closed world) as explicit
+booleans, and the HTTP transport ships with a 14-test suite covering
+its security posture.
+
 ## Hosted, no install
 
 If your MCP client supports remote HTTP servers with a custom header
