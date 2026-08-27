@@ -515,6 +515,12 @@ export function registerTools(server: McpServer, ctx: ToolContext): void {
         "Check your Lyrenth credit usage: plan tier, credits used against your " +
         "monthly limit, credits remaining, and the reset date. Takes no arguments.",
       inputSchema: {},
+      // openWorldHint=false is deliberate despite the outbound HTTP: the
+      // handler's only network call is the account's own fixed API base
+      // (ctx.apiBase, https://api.lyrenth.com by default), the endpoint the
+      // caller's credential belongs to. It returns bounded account data
+      // (tier, credits, reset date) and can never reach the open web, so
+      // its world is closed in exactly the sense the hint describes.
       annotations: { title: "Check usage", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (_args, extra) => withKey(extra, (key) => checkUsage(ctx, key)),
