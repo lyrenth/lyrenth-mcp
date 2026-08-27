@@ -47,9 +47,13 @@ const listTools = () =>
       stdio: ["pipe", "pipe", "pipe"],
       env: {
         ...process.env,
-        // The server exits without a key. Nothing here reaches the network:
-        // tools/list is answered from the local registration table.
-        LYRENTH_API_KEY: process.env.LYRENTH_API_KEY || "ci-tool-surface-probe",
+        // The server exits without a key, so a placeholder satisfies the
+        // boot check. ALWAYS the placeholder, never a real key from the
+        // caller's environment: nothing in this probe reaches the network
+        // (tools/list is answered from the local registration table), so a
+        // real credential in the child is pure downside, and scanners
+        // rightly flag secrets flowing into spawned processes.
+        LYRENTH_API_KEY: "ci-tool-surface-probe",
       },
     });
 

@@ -352,9 +352,15 @@ async function search(
 }
 
 /**
- * Every Lyrenth tool carries the same three annotations, declared rather
- * than left to a client's defaults, because the OpenAI Apps review reads
- * them and an unset hint is not the same as a false one.
+ * Every Lyrenth tool declares all four annotations INLINE as literals at
+ * its registerTool call, never through a shared constant or helper:
+ * OpenAI's directory review and third-party scanners (M8ven) verify
+ * hints by STATIC analysis and cannot resolve indirection, so a helper
+ * that assembles the object at runtime reads as "no hints declared".
+ * That exact regression shipped in 0.1.6 and cost a directory grade.
+ * The transport tests assert the served values, so the inlined literals
+ * cannot drift silently. The title is written both inside annotations
+ * and as the tool's own title field on purpose; both readers exist.
  *
  *   readOnlyHint    true:  a call reads a page or a counter and changes
  *                          nothing on the caller's account or on the web.
@@ -371,40 +377,6 @@ async function search(
  *                          on that misreading; directories treat an unset
  *                          hint as a failure, not a default.
  */
-const READ_ONLY_HINTS = {
-  readOnlyHint: true,
-  destructiveHint: false,
-  idempotentHint: true,
-  openWorldHint: true,
-} as const;
-
-/*
-  check_usage never leaves our own API, so its world is closed: the set
-  of things it can return is bounded, unlike the page readers above.
-*/
-const CLOSED_WORLD_HINTS = {
-  ...READ_ONLY_HINTS,
-  openWorldHint: false,
-} as const;
-
-/**
- * Build the annotations block for one tool.
- *
- * The title is set in TWO places on purpose, here inside `annotations`
- * and again as the tool's own `title` field where registerTool puts it.
- * The current spec's home for it is the top-level field, but version
- * 0.1.5 shipped it inside annotations and that is where the directory
- * reviews that already passed went looking. Writing both costs nothing
- * and cannot regress either reader.
- */
-function readOnlyAnnotations(title: string) {
-  return { title, ...READ_ONLY_HINTS };
-}
-
-function closedWorldAnnotations(title: string) {
-  return { title, ...CLOSED_WORLD_HINTS };
-}
-
 /**
  * Register the Lyrenth tools on an MCP server.
  *
@@ -462,7 +434,7 @@ export function registerTools(server: McpServer, ctx: ToolContext): void {
             .optional()
             .describe("Restrict results to this language code (for example en, de)."),
         },
-        annotations: readOnlyAnnotations("Search the index"),
+        annotations: { title: "Search the index", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },
       async ({ query, limit, country, language }, extra) =>
         withKey(extra, (key) => search(ctx, key, query, limit, country, language)),
@@ -495,7 +467,7 @@ export function registerTools(server: McpServer, ctx: ToolContext): void {
             "Cap the returned content to roughly this many tokens, trimmed at a clean paragraph or sentence boundary. Use it when you have a tight context budget.",
           ),
       },
-      annotations: readOnlyAnnotations("Read URL"),
+      annotations: { title: "Read URL", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async ({ url, fresh, max_tokens }, extra) =>
       withKey(extra, (key) => readUrl(ctx, key, url, fresh ?? false, max_tokens)),
@@ -529,7 +501,7 @@ export function registerTools(server: McpServer, ctx: ToolContext): void {
           .optional()
           .describe("Cap each returned document to roughly this many tokens."),
       },
-      annotations: readOnlyAnnotations("Read URLs (batch)"),
+      annotations: { title: "Read URLs (batch)", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
     async ({ urls, fresh, max_tokens }, extra) =>
       withKey(extra, (key) => readUrls(ctx, key, urls, fresh ?? false, max_tokens)),
@@ -543,7 +515,7 @@ export function registerTools(server: McpServer, ctx: ToolContext): void {
         "Check your Lyrenth credit usage: plan tier, credits used against your " +
         "monthly limit, credits remaining, and the reset date. Takes no arguments.",
       inputSchema: {},
-      annotations: closedWorldAnnotations("Check usage"),
+      annotations: { title: "Check usage", readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (_args, extra) => withKey(extra, (key) => checkUsage(ctx, key)),
   );
