@@ -4,6 +4,8 @@
 
 [![Listed on mcpservers.org](https://mcpservers.org/badge.svg)](https://mcpservers.org/servers/lyrenth/lyrenth-mcp)
 
+[![M8ven Verified](https://m8ven.ai/badge/mcp/lyrenth-lyrenth-mcp-0x2ngd?v=12e44451c7fa57cab2c329e4b0fad2af&variant=verified)](https://m8ven.ai/mcp/lyrenth-lyrenth-mcp-0x2ngd)
+
 Read the web through [Lyrenth](https://lyrenth.com)'s index from any MCP client.
 
 Exposes three tools:
