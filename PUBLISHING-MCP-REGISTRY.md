@@ -47,10 +47,11 @@ Add the printed record at your DNS provider:
 - **Value:** `v=MCPv1; k=ed25519; p=<the public key it printed>`
 
 Wait a few minutes for it to propagate, then log in (this reads the private key
-from `key.pem`):
+from `key.pem`; the awk takes the lines between `priv:` and `pub:`, because
+OpenSSL 4 prints the key on two lines where older versions used three):
 
 ```sh
-PRIVATE_KEY="$(openssl pkey -in key.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')"
+PRIVATE_KEY="$(openssl pkey -in key.pem -noout -text | awk '/^priv:/{f=1;next} /^pub:/{f=0} f' | tr -d ' :\n')"
 mcp-publisher login dns --domain lyrenth.com --private-key "${PRIVATE_KEY}"
 ```
 
@@ -75,34 +76,27 @@ curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=lyrenth" | p
   record) somewhere safe if you want to publish updates later; otherwise delete
   `key.pem`. You can leave the TXT record in place.
 
-## The public mirror is NOT a copy of this folder. Never sync it wholesale.
+## The public mirror is a projection of this folder
 
-`https://github.com/lyrenth/lyrenth-mcp` is public and is updated by hand.
-There is no automation, so it drifts, and one piece of that drift is
-deliberate and load-bearing:
+`https://github.com/lyrenth/lyrenth-mcp` is public, and since 2026-08-25 it
+is never edited by hand: `npm run sync:mirror` projects this folder onto it
+after running the release guards, and the owner commits and pushes the
+mirror. `key.pem` and the built `.mcpb` are never copied.
 
-**`src/index.ts` here registers four tools. The mirror registers three.**
-The fourth is `search`, added dark in commit `991920d` and staged for the
-search launch. It has no runtime flag: nothing in the source turns it off.
-The only thing keeping it dark is that it has never been published. Copying
-this folder over the mirror, or running `npm publish` from here, ships a
-search tool for a product that is gated off in production. That is the one
-class of error this project treats as the most damaging, so treat the
-mirror as a separate artifact and move files into it one at a time.
-
-Checked 2026-08-16: the mirror is identical to this folder except
-`src/index.ts` (intentional, above), the two files below, and a
-`?theme=light` parameter on the LobeHub badge in `README.md` (cosmetic).
+The tool surface a release hands every npx and .mcpb user is
+`release-tools.json`, checked against a real handshake by
+`scripts/check-tools.mjs --strict` in the Release workflow. Today it is
+three tools: `read_url`, `read_urls` and `check_usage`. The `search` tool is
+in the source and registered only when `LYRENTH_MCP_SEARCH=1`.
 
 **`plugin.json` and `manifest.json` are public copy, not package metadata.**
 The Cursor directory renders `plugin.json`'s `description` verbatim in its
 listing, so a stale sentence there is a stale sentence on someone else's
-website. Both files quote the corpus size. The index grows about 50 million
-pages a day, so any hard number goes stale in weeks: keep the "over" in
-front of it, round down to the last whole billion, and check it against
-`https://api.lyrenth.com/v1/stats/index` whenever you touch either file.
-Changing them here does nothing on its own. The edit has to be repeated in
-the mirror before any directory sees it.
+website. Neither file states the size of the index (owner, 2026-11-02): a number
+there goes stale as the index grows, and a directory listing is not
+something anyone updates every week.
+Changing them here does nothing on its own: a directory sees the edit only
+after the mirror is synced and pushed.
 
 ## Notes / gotchas
 

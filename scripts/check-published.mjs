@@ -30,7 +30,11 @@ const warnOnly = process.argv.includes("--warn");
 
 const REPO = "lyrenth/lyrenth-mcp";
 const LIVE = process.env.LYRENTH_MCP_ENDPOINT ?? "https://api.lyrenth.com/mcp";
-const timeout = (ms) => AbortSignal.timeout(ms);
+const NPM = process.env.LYRENTH_MCP_NPM_URL ?? "https://registry.npmjs.org";
+const REGISTRY = process.env.LYRENTH_MCP_REGISTRY_URL ?? "https://registry.modelcontextprotocol.io";
+const GITHUB_API = process.env.LYRENTH_MCP_GITHUB_API_URL ?? "https://api.github.com";
+const T = Number(process.env.LYRENTH_MCP_CHECK_TIMEOUT_MS) || 20000;
+const timeout = () => AbortSignal.timeout(T);
 
 const probe = async (name, fn) => {
   try {
@@ -44,14 +48,14 @@ const checks = await Promise.all([
   probe("repo", async () => ({ version: pkg.version, note: "package.json" })),
 
   probe("npm", async () => {
-    const r = await fetch(`https://registry.npmjs.org/${pkg.name}`, { signal: timeout(20000) });
+    const r = await fetch(`${NPM}/${pkg.name}`, { signal: timeout(20000) });
     const d = await r.json();
     return { version: d["dist-tags"]?.latest, note: `published ${(d.time?.[d["dist-tags"]?.latest] ?? "").slice(0, 10)}` };
   }),
 
   probe("registry", async () => {
     const r = await fetch(
-      `https://registry.modelcontextprotocol.io/v0.1/servers?search=${encodeURIComponent(server.name)}`,
+      `${REGISTRY}/v0.1/servers?search=${encodeURIComponent(server.name)}`,
       { signal: timeout(20000) }
     );
     const d = await r.json();
@@ -85,7 +89,7 @@ const checks = await Promise.all([
   }),
 
   probe("release", async () => {
-    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
+    const r = await fetch(`${GITHUB_API}/repos/${REPO}/releases/latest`, {
       headers: { accept: "application/vnd.github+json", "user-agent": "lyrenth-drift-watch" },
       signal: timeout(20000),
     });

@@ -22,8 +22,8 @@ they return the site's canonical version.
 
 Every tool declares all four MCP tool annotations (read-only,
 non-destructive, idempotent, and open or closed world) as explicit
-booleans, and the HTTP transport ships with a 14-test suite covering
-its security posture.
+booleans, and the HTTP transport ships with a test suite covering its
+security posture.
 
 ## Hosted, no install
 
