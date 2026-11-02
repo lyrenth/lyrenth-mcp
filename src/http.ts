@@ -46,10 +46,15 @@ import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { normalizeApiBase, registerTools, type AuthCarrier } from "./tools.js";
+import {
+  MAX_TOOL_INPUT_ELEMENTS,
+  normalizeApiBase,
+  registerTools,
+  type AuthCarrier,
+} from "./tools.js";
 
 const SERVER_NAME = "lyrenth";
-const SERVER_VERSION = "0.1.6";
+const SERVER_VERSION = "0.1.7";
 
 const PORT = Number(process.env.MCP_HTTP_PORT ?? 8081);
 const HOST = process.env.MCP_HTTP_HOST ?? "0.0.0.0";
@@ -231,7 +236,11 @@ async function handleMcpPost(req: IncomingMessage, res: ServerResponse): Promise
   // themselves are what refuse to run without a key.
   const token = bearerToken(req);
 
-  const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
+  const server = new McpServer(
+    { name: SERVER_NAME, version: SERVER_VERSION },
+    // The same element cap as src/index.ts, from tools.ts.
+    { maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS },
+  );
   registerTools(server, {
     apiBase: API_BASE,
     resolveApiKey: (extra: AuthCarrier) => extra.authInfo?.token ?? "",

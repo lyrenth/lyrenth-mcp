@@ -18,7 +18,7 @@ Exposes three tools:
 - **`check_usage`** reports your plan tier and credit usage.
 
 Reads resolve through Lyrenth's cross-caller cache, and for verified domains
-they return the publisher's canonical version.
+they return the site's canonical version.
 
 Every tool declares all four MCP tool annotations (read-only,
 non-destructive, idempotent, and open or closed world) as explicit
@@ -97,8 +97,9 @@ the cleaned AIDocument back.
   than raw HTML to a model.
 - **Cached across callers.** The same URL fetched by many agents collapses to a
   minimal number of origin fetches, so it is fast and origin-friendly.
-- **Canonical when verified.** When a site's owner has verified with Lyrenth,
-  you get the version they authored, kept fresh by their change signal.
+- **Fresh when verified.** When a site's owner has verified with Lyrenth, a page
+  they change is fetched again at the front of our crawl queue, so you read the
+  new version sooner.
 
 ## Privacy
 

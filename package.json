@@ -1,6 +1,6 @@
 {
   "name": "lyrenth-mcp",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "mcpName": "com.lyrenth/lyrenth-mcp",
   "description": "Model Context Protocol server for Lyrenth: read any web page as a clean AIDocument.",
   "license": "MIT",
@@ -41,7 +41,7 @@
   ],
   "homepage": "https://lyrenth.com",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

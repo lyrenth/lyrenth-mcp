@@ -33,10 +33,14 @@
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { normalizeApiBase, registerTools } from "./tools.js";
+import { MAX_TOOL_INPUT_ELEMENTS, normalizeApiBase, registerTools } from "./tools.js";
 
 async function main(): Promise<void> {
-  const server = new McpServer({ name: "lyrenth", version: "0.1.6" });
+  const server = new McpServer(
+    { name: "lyrenth", version: "0.1.7" },
+    // The same element cap as src/http.ts, from tools.ts.
+    { maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS },
+  );
 
   registerTools(server, {
     apiBase: normalizeApiBase(process.env.LYRENTH_API_URL),

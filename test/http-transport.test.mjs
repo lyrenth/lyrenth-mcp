@@ -18,14 +18,28 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { after, before, describe, it } from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const HTTP_ENTRY = path.join(HERE, "..", "dist", "http.js");
+const TOOLS_MODULE = pathToFileURL(path.join(HERE, "..", "dist", "tools.js")).href;
 
 /** Every upstream call the stub api saw, in order. */
 const upstreamCalls = [];
+
+/**
+ * The cache block the stub's /v1/aidocument answers with, by requested
+ * URL, so one read sees the stored copy and another a live fetch.
+ */
+const CACHE_BY_URL = {
+  "https://example.com/": { status: "hit", origin_contacted: false, body_fetched: false },
+  "https://example.com/new-page": {
+    status: "miss",
+    origin_contacted: true,
+    body_fetched: true,
+  },
+};
 
 let stubApi;
 let stubApiUrl;
@@ -40,11 +54,12 @@ function startStubApi() {
       req.on("data", (c) => chunks.push(c));
       req.on("end", () => {
         const raw = Buffer.concat(chunks).toString("utf8");
+        const body = raw ? JSON.parse(raw) : null;
         upstreamCalls.push({
           method: req.method,
           path: req.url,
           authorization: req.headers.authorization ?? null,
-          body: raw ? JSON.parse(raw) : null,
+          body,
         });
 
         res.setHeader("Content-Type", "application/json");
@@ -58,10 +73,27 @@ function startStubApi() {
           res.end(
             JSON.stringify({
               identity: { title: "Example Domain" },
-              source: { url: "https://example.com/", status_code: 200 },
+              source: { url: body?.url, status_code: 200, render_mode: "static" },
               signals: { word_count: 28 },
               economics: { output_tokens_approx: 41, token_savings_percent: 0.94 },
+              cache: CACHE_BY_URL[body?.url],
               content: { markdown: "This domain is for use in examples." },
+            }),
+          );
+          return;
+        }
+        if (req.url === "/v1/aidocument/batch") {
+          res.end(
+            JSON.stringify({
+              results: (body?.urls ?? []).map((url) => ({
+                url,
+                ok: true,
+                document: {
+                  identity: { title: "Example Domain" },
+                  source: { url, status_code: 200, render_mode: "static" },
+                  content: { markdown: "This domain is for use in examples." },
+                },
+              })),
             }),
           );
           return;
@@ -320,6 +352,87 @@ describe("streamable HTTP transport", () => {
     assert.match(text, /Source: https:\/\/example\.com\//);
     assert.match(text, /94% smaller than raw HTML/);
     assert.match(text, /This domain is for use in examples\./);
+    // The stub served its stored copy, so the header says so and does
+    // not claim the site was contacted.
+    assert.match(text, /cache hit/);
+    assert.doesNotMatch(text, /origin contacted/);
+  });
+
+  it("says in the header when a read contacted the site", async () => {
+    const { payload } = await mcpPost(
+      {
+        jsonrpc: "2.0",
+        id: 21,
+        method: "tools/call",
+        params: {
+          name: "read_url",
+          arguments: { url: "https://example.com/new-page" },
+        },
+      },
+      { apiKey: "key-belonging-to-alice" },
+    );
+
+    const text = payload.result.content[0].text;
+    assert.match(text, /cache miss, origin contacted/);
+    // The cache item sits right after the render mode.
+    assert.match(text, /render static · cache miss, origin contacted · 28 words/);
+  });
+
+  it("refuses arguments over the element cap before the tool's schema reads them", async () => {
+    const { MAX_TOOL_INPUT_ELEMENTS } = await import(TOOLS_MODULE);
+    // 200,000 one-letter strings: far over the cap, and at about 800 KB
+    // still under the 1 MB body cap, so the refusal is the SDK's and not
+    // the body cap's. Without the cap, zod checks every element and the
+    // answer lists every one of them.
+    const urls = new Array(200_000).fill("x");
+    const before = upstreamCalls.length;
+    const started = Date.now();
+    const { status, payload } = await mcpPost(
+      {
+        jsonrpc: "2.0",
+        id: 22,
+        method: "tools/call",
+        params: { name: "read_urls", arguments: { urls } },
+      },
+      { apiKey: "key-belonging-to-alice" },
+    );
+    const elapsed = Date.now() - started;
+
+    assert.equal(status, 200, "the body cap did not answer this call");
+    assert.equal(payload.result.isError, true);
+    const text = payload.result.content[0].text;
+    assert.ok(
+      text.length < 300,
+      `a short refusal, not one line per element (got ${text.length} characters)`,
+    );
+    assert.match(text, new RegExp(`more than the maximum of ${MAX_TOOL_INPUT_ELEMENTS} elements`));
+    assert.equal(
+      upstreamCalls.length,
+      before,
+      "a refused call reaches no upstream endpoint, /v1/aidocument included",
+    );
+    assert.ok(elapsed < 2000, `answered in ${elapsed} ms`);
+  });
+
+  it("still reads 20 URLs in one call, the most read_urls takes", async () => {
+    const urls = Array.from({ length: 20 }, (_, i) => `https://example.com/page-${i + 1}`);
+    const before = upstreamCalls.length;
+    const { payload } = await mcpPost(
+      {
+        jsonrpc: "2.0",
+        id: 23,
+        method: "tools/call",
+        params: { name: "read_urls", arguments: { urls } },
+      },
+      { apiKey: "key-belonging-to-alice" },
+    );
+
+    assert.equal(payload.result.isError, false);
+    assert.match(payload.result.content[0].text, /^Read 20\/20 URLs successfully\./);
+    const seen = upstreamCalls.slice(before);
+    assert.equal(seen.length, 1, "one batch call upstream");
+    assert.equal(seen[0].path, "/v1/aidocument/batch");
+    assert.deepEqual(seen[0].body.urls, urls);
   });
 
   it("explains the missing key instead of borrowing one", async () => {

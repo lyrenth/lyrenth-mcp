@@ -45,6 +45,20 @@ export interface ToolContext {
   includeSearch: boolean;
 }
 
+/**
+ * The most array elements and object members one tool call's arguments may
+ * hold, counted together at every depth. Both entry points hand it to
+ * McpServer as maxToolInputElements, and the SDK refuses a call over it
+ * before any tool's zod schema reads the arguments.
+ *
+ * Why: zod 3 builds one issue per element it rejects, so a huge array sent
+ * to read_urls (which takes 20 URLs) exhausts memory (GHSA-mrhx-c7xc-m3w5,
+ * fixed only in zod 4, which changes the input schemas clients see). The
+ * hosted endpoint's 1 MB body cap still fits about 500,000 elements. The
+ * largest call any tool accepts counts 23 (read_urls with 20 URLs).
+ */
+export const MAX_TOOL_INPUT_ELEMENTS = 1_000;
+
 export type TextResult = {
   content: { type: "text"; text: string }[];
   isError?: boolean;
@@ -135,13 +149,21 @@ function formatDoc(doc: unknown, requestedUrl: string): string {
   const source = d.source ?? {};
   const signals = d.signals ?? {};
   const economics = d.economics ?? {};
+  const cache = d.cache ?? {};
   const markdown: string = d.content?.markdown ?? "";
 
   const tokens = economics.output_tokens_approx;
   const savings = economics.token_savings_percent; // fraction, e.g. 0.91
+  // The api's own status word (hit, miss, refreshed, stale_revalidated),
+  // printed as sent, so an agent can tell a stored copy from a live fetch.
+  const cacheItem =
+    typeof cache.status === "string" && cache.status
+      ? `cache ${cache.status}${cache.origin_contacted === true ? ", origin contacted" : ""}`
+      : null;
   const metaLine = [
     source.status_code ? `status ${source.status_code}` : null,
     source.render_mode ? `render ${source.render_mode}` : null,
+    cacheItem,
     typeof signals.word_count === "number" ? `${signals.word_count} words` : null,
     typeof tokens === "number" ? `~${tokens.toLocaleString()} tokens` : null,
     typeof savings === "number" ? `${Math.round(savings * 100)}% smaller than raw HTML` : null,

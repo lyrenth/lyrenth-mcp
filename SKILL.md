@@ -8,7 +8,7 @@ description: Read the content of one or many public web pages through Lyrenth, a
 Lyrenth turns a public URL into an AIDocument: clean Markdown plus the
 page title, description and structure, with navigation, menus, cookie
 banners and other boilerplate removed. Reads come from Lyrenth's own
-index of over 2 billion pages, which grows by over 50 million pages a
+index of over 4 billion pages, which grows by over 50 million pages a
 day. A page nobody has read yet is fetched once, then everyone gets the
 fast copy.
 
