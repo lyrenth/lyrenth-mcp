@@ -3,7 +3,8 @@ name: Drift watch
 # Publishing is five systems agreeing on one number. They can each fall behind
 # without anyone noticing, because nothing breaks: users just install a version
 # that is not the one in the repo. This looks once a week and opens an issue
-# when they disagree.
+# when they disagree. A surface that does not answer is not a disagreement: the
+# run gets a warning instead, the issue is left alone, and next week looks again.
 
 on:
   schedule:
@@ -43,3 +44,12 @@ jobs:
             gh label create version-drift --color BFD4F2 --description "Published surfaces out of step" 2>/dev/null || true
             gh issue create --title "$title" --label version-drift --body "$body"
           fi
+
+      - name: Warn about surfaces that could not be checked
+        if: steps.drift.outputs.drift != 'true' && steps.drift.outputs.unchecked == 'true'
+        env:
+          UNCHECKED: ${{ steps.drift.outputs.unchecked_surfaces }}
+        run: |
+          line="Could not check: ${UNCHECKED}. Every surface that answered agrees with package.json, so the drift issue was not touched."
+          echo "::warning title=Published versions not checked::${line}"
+          printf '\n%s\n' "$line" >> "$GITHUB_STEP_SUMMARY"
